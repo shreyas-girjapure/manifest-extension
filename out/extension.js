@@ -322,8 +322,41 @@ function activate(context) {
             vscode.window.showInformationMessage('No members found in selection to generate package.xml.');
             return;
         }
+        // Merge blocks that share the same <name> so members are grouped under one <types> block per name.
+        // Preserve first-seen order of names.
+        const nameOrder = [];
+        const membersByName = {};
+        for (const b of blocks) {
+            const nameMatch = /<name>\s*([^<]*)\s*<\/name>/i.exec(b);
+            const nameVal = nameMatch ? nameMatch[1].trim() : '';
+            if (!nameOrder.includes(nameVal))
+                nameOrder.push(nameVal);
+            const mems = [];
+            const memRegex = /<members>\s*([^<]*)\s*<\/members>/gi;
+            let mm2;
+            while ((mm2 = memRegex.exec(b)) !== null) {
+                const m = (mm2[1] || '').trim();
+                if (m)
+                    mems.push(m);
+            }
+            membersByName[nameVal] = membersByName[nameVal] || [];
+            for (const m of mems) {
+                if (!membersByName[nameVal].includes(m))
+                    membersByName[nameVal].push(m);
+            }
+        }
+        const mergedBlocks = [];
+        for (const nm of nameOrder) {
+            const mems = membersByName[nm] || [];
+            const memberTags = mems.map(m => `<members>${m}</members>`).join('\n    ');
+            const nameTag = nm ? `<name>${nm}</name>` : `<name></name>`;
+            const block = `<types>\n    ${memberTags}\n    ${nameTag}\n</types>`;
+            mergedBlocks.push(block);
+        }
+        // replace blocks with mergedBlocks for final output
+        const finalBlocks = mergedBlocks;
         // Ensure each <types> block is indented consistently under <Package>
-        const indentedBlocks = blocks.map(b => b.split('\n').map(line => '    ' + line).join('\n')).join('\n');
+        const indentedBlocks = finalBlocks.map(b => b.split('\n').map(line => '    ' + line).join('\n')).join('\n');
         const packageContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n${indentedBlocks}\n    <version>64.0</version>\n</Package>\n`;
         output.appendLine('Generated package.xml from selection:');
         output.appendLine(packageContent);
