@@ -266,7 +266,13 @@ function activate(context) {
             // 1) Include any full types blocks that are entirely inside the selection
             for (const t of allTypesMatches) {
                 if (t.start >= selStart && t.end <= selEnd) {
-                    blocks.push(t.text.trim());
+                    // Normalize the full types block: extract members and name and rebuild so indentation is consistent
+                    const members = Array.from((t.text || '').matchAll(/<members>\s*([\s\S]*?)\s*<\/members>/gi)).map(m => `<members>${(m[1] || '').trim()}</members>`);
+                    const nameMatchFull = /<name>\s*([^<]*)\s*<\/name>/i.exec(t.text || '');
+                    const nameValFull = nameMatchFull ? nameMatchFull[1].trim() : '';
+                    const nameTagFull = nameValFull ? `<name>${nameValFull}</name>` : `<name></name>`;
+                    const block = `<types>\n    ${members.join('\n    ')}\n    ${nameTagFull}\n</types>`;
+                    blocks.push(block);
                 }
             }
             // 2) Find member tags inside the selection that are NOT inside any full types block we already included
@@ -280,10 +286,20 @@ function activate(context) {
                     const insideIncluded = allTypesMatches.some(t => t.start >= selStart && t.end <= selEnd && mStart >= t.start && mEnd <= t.end);
                     if (insideIncluded)
                         continue; // skip, it's already part of a full block
-                    // find nearest <name> after this member
-                    const rest = docText.substring(mEnd);
-                    const nameMatch = /<name>\s*([^<]*)\s*<\/name>/i.exec(rest);
-                    const nameVal = nameMatch ? nameMatch[1].trim() : '';
+                    // Prefer the <name> inside the enclosing <types> block (if any). If the member is inside a types
+                    // block that doesn't have a <name>, use an empty name. Only if there's no enclosing types block do
+                    // we fall back to searching the next <name> in the document.
+                    let nameVal = '';
+                    const enclosing = allTypesMatches.find(t => t.start <= mStart && t.end >= mEnd);
+                    if (enclosing) {
+                        const nm = /<name>\s*([^<]*)\s*<\/name>/i.exec(enclosing.text);
+                        nameVal = nm ? nm[1].trim() : '';
+                    }
+                    else {
+                        const rest = docText.substring(mEnd);
+                        const nameMatch = /<name>\s*([^<]*)\s*<\/name>/i.exec(rest);
+                        nameVal = nameMatch ? nameMatch[1].trim() : '';
+                    }
                     sel.__memberGroups = sel.__memberGroups || new Map();
                     const map = sel.__memberGroups;
                     const list = map.get(nameVal) ?? [];
@@ -295,9 +311,9 @@ function activate(context) {
             const map = sel.__memberGroups;
             if (map) {
                 for (const [nameVal, memberTags] of map.entries()) {
-                    const membersJoined = memberTags.join('\n        ');
-                    const nameTag = `<name>${nameVal}</name>`;
-                    const block = `<types>\n        ${membersJoined}\n        ${nameTag}\n    </types>`;
+                    const membersJoined = memberTags.join('\n    ');
+                    const nameTag = nameVal ? `<name>${nameVal}</name>` : `<name></name>`;
+                    const block = `<types>\n    ${membersJoined}\n    ${nameTag}\n</types>`;
                     blocks.push(block);
                 }
             }
@@ -306,7 +322,9 @@ function activate(context) {
             vscode.window.showInformationMessage('No members found in selection to generate package.xml.');
             return;
         }
-        const packageContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n${blocks.join('\n')}\n    <version>64.0</version>\n</Package>\n`;
+        // Ensure each <types> block is indented consistently under <Package>
+        const indentedBlocks = blocks.map(b => b.split('\n').map(line => '    ' + line).join('\n')).join('\n');
+        const packageContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Package xmlns="http://soap.sforce.com/2006/04/metadata">\n${indentedBlocks}\n    <version>64.0</version>\n</Package>\n`;
         output.appendLine('Generated package.xml from selection:');
         output.appendLine(packageContent);
         output.show(true);

@@ -1,1 +1,28 @@
-node_modules
+node_modules/
+
+# Compiled output
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Packaging
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+
+# env
+.env
+
+# temporary
+tmp/
+coverage/
+
+# IDE
+.idea/
