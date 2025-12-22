@@ -1,8 +1,9 @@
 {
   "name": "manifest-extension",
+  "publisher": "debuggod",
   "displayName": "Salesforce Manifest Helper",
-  "description": "Retrieve and deploy members referenced in package XML files from/to the default Salesforce org.",
-  "version": "0.0.1",
+  "description": "Selectively retrieve or deploy members referenced in Salesforce package.xml files using the user's default org.",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -33,6 +34,11 @@
     "typescript": "^4.7.0",
     "vscode": "^1.1.34"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/debuggod/manifest-extension.git"
+  },
+  "license": "MIT",
   "contributes": {
     "commands": [
       {

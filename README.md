@@ -1,13 +1,65 @@
 # Salesforce Manifest Helper
 
-This VS Code extension adds two context-menu commands (when editing XML files) to retrieve or deploy selected member(s) referenced in Salesforce package.xml files using the user's default org.
+Selectively retrieve or deploy members listed in Salesforce package.xml files.
 
-Features
-- Right-click in an XML editor -> "Retrieve selected member(s) from Org (test)" or "Deploy selected member(s) to Org (test)".
-- Supports multiple cursors/selections.
-- Attempts to determine metadata type by scanning the workspace package.xml. If unable, prompts you to pick a type.
-- Uses the Salesforce CLI (`sf`) and the user's default org (no extra alias necessary).
+Why this extension
 
-Notes
-- This is a lightweight scaffold. It relies on the `sf` CLI being available in your PATH.
-- To build/install: run `npm install` then `npm run compile` and use the Extension Development Host to run.
+When working with Salesforce manifests it's common to retrieve or deploy the entire `package.xml`. This extension adds the ability to act on only the selected lines or XML fragments in the editor — so you can retrieve or deploy a handful of members without touching the rest of the manifest.
+
+Core features
+
+- Retrieve or deploy only the selected member(s) from a manifest (supports multiple selections).
+- Attempts to infer metadata types from the workspace `package.xml`; prompts when ambiguous.
+- Uses the Salesforce CLI (`sf`) with the user's default org (no alias required).
+- Small, focused UI: context-menu commands in the XML editor.
+
+Commands
+
+- `sfdxManifest.retrieve` — "Retrieve selected member(s) from Org"
+	- Use: open a `package.xml` (or any XML), select one or more member lines, right-click -> *Retrieve selected member(s) from Org*.
+	- Behavior: writes a temporary manifest containing the selected members and runs `sf project retrieve --manifest <temp>` (shows CLI output).
+
+- `sfdxManifest.deploy` — "Deploy selected member(s) to Org"
+	- Use: select member lines in an XML manifest, right-click -> *Deploy selected member(s) to Org*.
+	- Behavior: writes a temporary manifest and runs `sf project deploy start --manifest <temp>` (shows CLI output).
+
+- `sfdxManifest.generateTypes` — "Generate package.xml from selection"
+	- Use: select any XML fragment or lines and run the command (context menu or Command Palette).
+	- Behavior: builds a `package.xml` containing detected metadata types and member names for inspection or copy/paste.
+
+Quick start (local testing)
+
+1. Install dev deps and build:
+
+```bash
+npm install
+npm run compile
+```
+
+2. Run tests:
+
+```bash
+npm test
+```
+
+3. Package a `.vsix` for local install:
+
+```bash
+npx vsce package
+```
+
+4. Install locally into VS Code:
+
+```bash
+code --install-extension manifest-extension-0.1.0.vsix
+```
+
+Tips & troubleshooting
+
+- Ensure the `sf` CLI is installed and available on your PATH (or configure your environment so VS Code can see it). If `spawn sf ENOENT` appears, `sf` is not found by the editor process.
+- Temporary manifests are written to the workspace by default; check the extension configuration `manifestExtension.tempLocation` to change that behavior.
+
+Contributing
+
+Contributions, issues and pull requests are welcome — please open them against the repository.
+
