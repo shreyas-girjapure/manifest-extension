@@ -4,7 +4,7 @@
   "displayName": "Salesforce Manifest Helper",
   "icon": "images/icon.png",
   "description": "Selectively retrieve or deploy members referenced in Salesforce package.xml files using the user's default org.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.70.0"
   },
