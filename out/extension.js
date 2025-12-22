@@ -67,50 +67,47 @@ function cleanCliOutput(raw) {
     s = s.replace(/\n{2,}/g, '\n');
     return s.trim();
 }
-function runCliRaw(command, cwd) {
-    return new Promise((resolve) => {
-        const child = (0, child_process_1.exec)(command, { cwd, maxBuffer: 50 * 1024 * 1024 }, (err, stdout, stderr) => {
-            const code = err ? (err.code ?? null) : 0;
-            resolve({ rawStdout: stdout || '', rawStderr: stderr || '', code });
-        });
-    });
-}
 async function runSfWithManifest(manifestPath, sfCmdBase) {
     const cwd = getWorkspaceRoot() || path.dirname(manifestPath);
     const parts = sfCmdBase.split(' ').filter(Boolean);
     const cmd = parts[0];
-    const args = parts.slice(1).concat(['--manifest', manifestPath, '--json']);
+    const quotedManifest = `"${manifestPath}"`;
+    const args = parts.slice(1).concat([
+        '--manifest',
+        quotedManifest,
+        '--json'
+    ]);
     return await new Promise((resolve) => {
-        const child = (0, child_process_1.spawn)(cmd, args, { cwd });
+        const child = (0, child_process_1.spawn)(cmd, args, { cwd, shell: true });
         let stdout = '';
         let stderr = '';
-        child.stdout?.on('data', (chunk) => { stdout += chunk.toString(); });
-        child.stderr?.on('data', (chunk) => { stderr += chunk.toString(); });
+        child.stdout?.on('data', (chunk) => stdout += chunk.toString());
+        child.stderr?.on('data', (chunk) => stderr += chunk.toString());
         child.on('close', (code) => {
             const cleaned = cleanCliOutput(stdout + '\n' + stderr);
             let parsed;
             try {
                 parsed = stdout.trim() ? JSON.parse(stdout) : undefined;
             }
-            catch (e) {
-                // fallback: try to extract last JSON object from stdout
-                const candidate = stdout || stderr || '';
-                const lastOpen = candidate.lastIndexOf('{');
-                const lastClose = candidate.lastIndexOf('}');
-                if (lastOpen !== -1 && lastClose !== -1 && lastClose > lastOpen) {
-                    const jsonText = candidate.substring(lastOpen, lastClose + 1);
-                    try {
-                        parsed = JSON.parse(jsonText);
-                    }
-                    catch (ee) {
-                        parsed = undefined;
-                    }
-                }
+            catch {
+                parsed = undefined;
             }
-            resolve({ parsed, cleaned, rawStdout: stdout, rawStderr: stderr, code: code });
+            resolve({
+                parsed,
+                cleaned,
+                rawStdout: stdout,
+                rawStderr: stderr,
+                code
+            });
         });
         child.on('error', (err) => {
-            resolve({ parsed: undefined, cleaned: String(err), rawStdout: '', rawStderr: String(err), code: err.code ?? 1 });
+            resolve({
+                parsed: undefined,
+                cleaned: String(err),
+                rawStdout: '',
+                rawStderr: String(err),
+                code: err.code ?? 1
+            });
         });
     });
 }
