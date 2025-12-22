@@ -4,7 +4,7 @@ Selectively retrieve or deploy members listed in Salesforce package.xml files.
 
 Why this extension
 
-When working with Salesforce manifests it's common to retrieve or deploy the entire `package.xml`. This extension adds the ability to act on only the selected lines or XML fragments in the editor — so you can retrieve or deploy a handful of members without touching the rest of the manifest.
+When working with Salesforce manifests it's common to retrieve or deploy the entire `package.xml`. This extension adds the ability to act on only the selected lines or XML fragments in the editor so you can retrieve or deploy a handful of members without touching the rest of the manifest.
 
 Core features
 
@@ -59,7 +59,9 @@ Tips & troubleshooting
 - Ensure the `sf` CLI is installed and available on your PATH (or configure your environment so VS Code can see it). If `spawn sf ENOENT` appears, `sf` is not found by the editor process.
 - Temporary manifests are written to the workspace by default; check the extension configuration `manifestExtension.tempLocation` to change that behavior.
 
+
 Contributing
 
-Contributions, issues and pull requests are welcome — please open them against the repository.
+Contributions, issues and pull requests are welcome — please open them against the repository: https://github.com/shreyas-girjapure/manifest-extension
+
 
