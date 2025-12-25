@@ -44,15 +44,15 @@
     "commands": [
       {
         "command": "sfdxManifest.retrieve",
-        "title": "Retrieve selected member(s) from Org"
+        "title": "ManifestHelper: Retrieve selected member(s) from Org"
       },
       {
         "command": "sfdxManifest.deploy",
-        "title": "Deploy selected member(s) to Org"
+        "title": "ManifestHelper: Deploy selected member(s) to Org"
       },
       {
         "command": "sfdxManifest.generateTypes",
-        "title": "Generate package.xml from selection"
+        "title": "ManifestHelper: Generate package.xml from selection"
       }
     ],
     "menus": {
@@ -85,12 +85,31 @@
             "extensionStorage"
           ],
           "default": "workspace",
-          "description": "Where temporary manifests are written. 'workspace' writes to <workspace>/.manifest-extension, 'extensionStorage' uses the extension's storage location."
+          "description": "Where temporary manifests are written. 'workspace' writes to <workspace>/<workspaceTempFolder>, 'extensionStorage' uses the extension's storage location."
+        },
+        "manifestExtension.workspaceTempFolder": {
+          "type": "string",
+          "default": "manifest",
+          "description": "Folder used when tempLocation is 'workspace'. Relative paths are resolved under the workspace root; absolute paths are used as-is. The folder is created if missing."
+        },
+        "manifestExtension.deleteTempOnSuccess": {
+          "type": "boolean",
+          "default": true,
+          "description": "When enabled, deletes the temporary manifest file created for Retrieve/Deploy after a successful command. Does not affect the 'Generate package.xml' command."
+        },
+        "manifestExtension.cliOutput": {
+          "type": "string",
+          "enum": [
+            "human",
+            "json"
+          ],
+          "default": "human",
+          "description": "Controls sf CLI output format for Retrieve/Deploy. 'human' shows the standard sf output; 'json' adds --json and prints parsed JSON to the Output channel."
         },
         "manifestExtension.stripStack": {
           "type": "boolean",
           "default": true,
-          "description": "Strip 'stack' keys from CLI JSON output before showing in Output channel."
+          "description": "Strip 'stack' keys from CLI JSON output before showing in Output channel (only applies when cliOutput is 'json')."
         }
       }
     }
